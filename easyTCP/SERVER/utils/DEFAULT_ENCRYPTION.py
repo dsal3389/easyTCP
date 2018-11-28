@@ -3,8 +3,10 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
 
+__all__ = ('ENCRYPTION_BASE',)
 
 class ENCRYPTION_BASE(object):
+    """to overwrite the CLIENT_encryption and the SERVER_encryption all you need is to overwrite this BASE enctyption class"""
 
     def encrypt(self, text):
         """

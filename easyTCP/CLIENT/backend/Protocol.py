@@ -1,7 +1,7 @@
 import asyncio
 import json
-from utils import DEFAULT_SETTINGS
-from utils.DEFAULT_ENCRYPTION import SERVER_encryption, CLIENT_encryption
+from ..utils import DEFAULT_SETTINGS
+from ..utils.DEFAULT_ENCRYPTION import SERVER_encryption, CLIENT_encryption
 
 
 def json_dumper(data):

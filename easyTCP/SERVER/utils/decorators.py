@@ -1,5 +1,5 @@
 import asyncio
-from backend import SERVER
+from ..backend import SERVER
 
 
 def add_request(func):

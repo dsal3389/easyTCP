@@ -4,12 +4,18 @@ from .ClientExceptions import *
 
 
 class CLIENT(Protocol):
-    def __init__(self, ip, port, *, client_encryption=None, loop=None):
+    def __init__(self, ip:str, port:int, *, client_encryption=None, loop=None):
         super().__init__(loop=loop, client_encryption=client_encryption)
-        self.ip=ip
-        self.port=port
+        self.ip              = ip
+        self.port            = port
+        self.current_request = None
+        self.listen_event    = None
+        self.get_response    = None
 
-        self.error_codes={'404':NotFound404Error, '403':ForbiddenRequestError}
+        self.error_codes     = { 
+                                '404':NotFound404Error, 
+                                '403':ForbiddenRequestError
+                            }
 
     @asyncio.coroutine
     def connect(self) -> None:
@@ -18,7 +24,7 @@ class CLIENT(Protocol):
         yield from self._start()
     
     @asyncio.coroutine
-    def request(self, method:str, time_out=30, **kwargs) -> None or dict:
+    def request(self, method:str, time_out=15, **kwargs) -> None:
         """
         sends to server server a request and calling the decorator "on_recv" if the data recved
         if client has forbidden access to the request a ForbiddenRequestError will be raised
@@ -29,17 +35,11 @@ class CLIENT(Protocol):
         """
         yield from self.send(method.upper(), **kwargs)
         try:
-            method, data = yield from asyncio.wait_for(self.expected(method.upper(), *self.error_codes),
-                                                       time_out, loop=self.loop
-                                                      )
-        except ValueError as e: # value error raised when the request recv unexpected method
-            yield from self._call_decorated_function('on_error', error=e)
-        else:
-            if method in self.error_codes:
-                raise self.error_codes[method]
-            else:
-                yield from self._call_decorated_function('on_recv', method=method, data=data)
-    
+            method, data = yield from asyncio.wait_for(self.listen_event, time_out, # listening and waiting for the current listening event
+                                                       loop=self.loop)
+        except Exception as e:
+            raise e # catch and do things with the error
+
     @asyncio.coroutine
     def handshake(self):
         method, data = yield from self.expected('HANDSHAKE', dencrypt=False)
@@ -68,22 +68,33 @@ class CLIENT(Protocol):
     
     @asyncio.coroutine
     def listen(self):
-        try:
-            while True:
-                try:
-                    method, data = yield from self.recv()
-                except Exception as e:
-                    yield from self._call_decorated_function('on_error', error=e)
+        """starting to listen to the server (starting automaticliy)"""
+        while True:
+            self.current_recv_task = self.loop.create_task(self.listening_event())
+            try:
+                method, data = yield from self.recv()
+            except Exception as e:
+                yield from self._call_decorated_function('on_error', error=e)
+            else:
+                if method in self.error_codes:
+                    self.listen_event.set_exception(self.error_codes[method])
                 else:
-                    if method in self.error_codes:
-                        raise self.error_codes[method]
-                    yield from self._call_decorated_function('on_recv', method=method, data=data)
-        except (ForbiddenRequestError, NotFound404Error): pass # the event listener dosent need to break because of those exceptions
+                    self.listen_event.set_result((method, data))
+    
+    @asyncio.coroutine
+    def listening_event(self):
+        """You can listen to that event but the function "listen" doing that for you automaticliy"""
+        self.listen_event=self.loop.create_future()
+        try:
+            method, data = yield from self.listen_event
+        except Exception as e: pass
+        else:
+            yield from self._call_decorated_function('on_recv', method=method, data=data)
 
     @asyncio.coroutine
     def _call_decorated_function(self, function_name, *args, **kwargs):
         try:
-            yield from  getattr(self, function_name)(*args, **kwargs)
+            yield from getattr(self, function_name)(*args, **kwargs)
         except TypeError as e: pass # passing in case you didn't add the called decorator
 
     @classmethod
@@ -131,4 +142,5 @@ class CLIENT(Protocol):
             raise ValueError('%s is not coroutine function' %(func.__name__))
         setattr(cls, 'on_server_error', func)
         return func
-    
+
+            

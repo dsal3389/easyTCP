@@ -68,7 +68,7 @@ class CLIENT(Protocol):
             except Exception as e:
                 yield from self.server._call_decorated_function('on_client_error', client=self, error=e)
             else:
-                asyncio.ensure_future(self._prosses(method, data), loop=self.loop)
+                self.loop.create_task(self._prosses(method, data))
     
     @asyncio.coroutine
     def _prosses(self, method, data):

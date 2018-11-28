@@ -1,11 +1,11 @@
 import asyncio
-from backend import CLIENT
+from ..backend import CLIENT
 
 
 async def args_to_dict(*args):
     """
     convert string to dict to send data to the server
-    x = echo -m this the value
+    x = 'echo -m this the value'
     converted_to_list = x.split('-')
 
     await args_to_dict(*converted_to_list)
@@ -24,8 +24,11 @@ async def args_to_dict(*args):
         values[_[0]]=i[len(_[0]) +1:]
     return method.strip(), values
 
-async def executer(client, loop=asyncio.get_event_loop()):
-    """this is for fast testing you can use it for your projects or somthing but this is very basic and poor"""
+async def executer(client, time_out=10, *,loop=asyncio.get_event_loop()):
+    """
+    this is for fast testing you can use it for your projects or somthing but this is very basic and poor
+    DO NOT use executer like this is mostliy for fast testing sure you have more ideas for how to make a nice looking code and more dynamic
+    """
     while True:
         x = await loop.run_in_executor(None, input, '>>> ')
         if len(x.strip()) == 0:
@@ -40,4 +43,6 @@ async def executer(client, loop=asyncio.get_event_loop()):
         except IndexError:
             print('Missing Indexs')
         else:
-            await client.send(method, **values)
+            asyncio.ensure_future(client.request(time_out=time_out,
+                                    method=method, **values), loop=loop)
+

@@ -5,6 +5,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 
 
 class ENCRYPTION_BASE(object):
+    """to overwrite the CLIENT_encryption and the SERVER_encryption all you need is to overwrite this BASE enctyption class"""
 
     def encrypt(self, text):
         """send to the client to encrypt messages"""

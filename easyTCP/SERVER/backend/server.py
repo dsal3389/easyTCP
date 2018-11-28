@@ -46,8 +46,7 @@ class SERVER:
     def _call_decorated_function(self, function_name, *args, **kwargs):
         try:
             yield from getattr(self, function_name)(**kwargs)
-        except TypeError as e:
-            raise e
+        except TypeError as e: pass
 
     @classmethod
     def on_ready(cls, func):
