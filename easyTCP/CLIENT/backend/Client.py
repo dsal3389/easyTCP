@@ -4,18 +4,23 @@ from .ClientExceptions import *
 
 
 class CLIENT(Protocol):
-    def __init__(self, ip:str, port:int, *, client_encryption=None, loop=None):
+    def __init__(self, ip:str, port:int, *, admin_password=None, client_encryption=None, loop=None):
         super().__init__(loop=loop, client_encryption=client_encryption)
         self.ip              = ip
         self.port            = port
-        self.current_request = None
-        self.listen_event    = None
-        self.get_response    = None
+        self.connected       = False # tells you if the client connected or not
+        self.listen_event    = self.loop.create_future()
+        self.password        = admin_password
+        self.type            = 'ADMIN' if self.password is not None else 'CLIENT'
+        # if you entered password you are tring to log as admin if you keed it None
+        # you will be entered as a normal client
 
-        self.error_codes     = { 
-                                '404':NotFound404Error, 
-                                '403':ForbiddenRequestError
-                            }
+        self.error_codes = {
+                            '406':NotAcceptable406Error,
+                            '401':AnuthenticationFail401Error,
+                            '404':NotFound404Error, 
+                            '403':ForbiddenRequestError
+                        }
 
     @asyncio.coroutine
     def connect(self) -> None:
@@ -49,7 +54,15 @@ class CLIENT(Protocol):
         method, data = yield from self.expected('HANDSHAKE')
         self.id = data['id']
 
-        yield from self.send('HANDSHAKE')
+        yield from self.send('HANDSHAKE', type=self.type, password=self.password)
+        # if your type is CLIENT the server will ignore the password
+
+        if self.type is 'ADMIN':
+            method, data = yield from self.expected('HANDSHAKE', '401')
+            if method == '401':
+                yield from self._call_decorated_function('on_recv', method=method, data=data)
+                # the server will return a reason if the client didnt logged in as admin
+        self.connected = True
 
     @asyncio.coroutine
     def _start(self):
@@ -57,12 +70,13 @@ class CLIENT(Protocol):
             yield from asyncio.wait_for(self.handshake(), 25,
                                         loop=self.loop)
         except Exception as e:
-            yield from self._call_decorated_function('on_error', error=e)
+            yield from self._call_decorated_function('on_error', error=e) # if you are able to do things with that error
         else:
             yield from self._run()
     
     @asyncio.coroutine
     def _run(self):
+        """starting all the thing that needed to be start when connecting"""
         asyncio.ensure_future(self.listen(), loop=self.loop)
         yield from self._call_decorated_function('on_connection')
     
@@ -73,6 +87,9 @@ class CLIENT(Protocol):
             self.current_recv_task = self.loop.create_task(self.listening_event())
             try:
                 method, data = yield from self.recv()
+            except ValueError:
+                yield from self.close()
+                break
             except Exception as e:
                 yield from self._call_decorated_function('on_error', error=e)
             else:
@@ -83,19 +100,29 @@ class CLIENT(Protocol):
     
     @asyncio.coroutine
     def listening_event(self):
-        """You can listen to that event but the function "listen" doing that for you automaticliy"""
+        """activating/updating the listen_event made by the "listen" function"""
         self.listen_event=self.loop.create_future()
         try:
             method, data = yield from self.listen_event
-        except Exception as e: pass
+        except Exception: pass
         else:
             yield from self._call_decorated_function('on_recv', method=method, data=data)
+
+    @asyncio.coroutine
+    def close(self):
+        try:
+            self.listen_event.set_result((None))
+        except AttributeError: pass
+        finally:
+            self.connected = False
+            self.writer.close()
+            yield from self._call_decorated_function('on_disconnect')
 
     @asyncio.coroutine
     def _call_decorated_function(self, function_name, *args, **kwargs):
         try:
             yield from getattr(self, function_name)(*args, **kwargs)
-        except TypeError as e: pass # passing in case you didn't add the called decorator
+        except TypeError: pass # passing in case you didn't add the called decorator
 
     @classmethod
     def on_connection(cls, func):
@@ -103,6 +130,14 @@ class CLIENT(Protocol):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError('%s is not coroutine function' %(func.__name__))
         setattr(cls, 'on_connection', func)
+        return func
+
+    @classmethod
+    def on_disconnect(cls, func):
+        """function called when the server shuts down or you close the connection"""
+        if not asyncio.iscoroutinefunction(func):
+            raise ValueError('%s is not coroutine function' %(func.__name__))
+        setattr(cls, 'on_disconnect', func)
         return func
     
     @classmethod

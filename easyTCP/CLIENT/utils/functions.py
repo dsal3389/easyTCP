@@ -45,4 +45,6 @@ async def executer(client, time_out=10, *,loop=asyncio.get_event_loop()):
         else:
             asyncio.ensure_future(client.request(time_out=time_out,
                                     method=method, **values), loop=loop)
+            # to be able to catch errors from this future you need to await it
+            # in that case I didnt do that thats why you should create your owne version
 

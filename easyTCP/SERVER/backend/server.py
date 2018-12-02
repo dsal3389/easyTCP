@@ -5,15 +5,17 @@ from .Client import CLIENT
 class SERVER:
     client = CLIENT
 
-    def __init__(self, IP, PORT, encryption, *, settings, loop=None):
-        self.ip = IP
+    def __init__(self, IP:str, PORT:int, encryption, *, settings, admin_password, loop=None):
+        self.ip   = IP
         self.port = PORT
 
-        self.settings = settings
-        self.encryption = encryption
-        self.loop=loop or asyncio.get_event_loop()
+        self.admin_password = admin_password
+        self.settings       = settings
+        self.encryption     = encryption
+        self.loop           = loop or asyncio.get_event_loop()
 
         self._clients = {}
+        self._admins  = {}
     
     @asyncio.coroutine
     def start(self):
@@ -30,14 +32,20 @@ class SERVER:
     @asyncio.coroutine
     def add_client(self, id, client):
         """adding client object to client list in the server calling decorator: on_client_join"""
-        self._clients[id] = client
+        if client.is_admin:
+            self._admins[id] = client
+        else:
+            self._clients[id] = client
         yield from self._call_decorated_function('on_client_join', id=id, client=client)
-    
+
     @asyncio.coroutine
-    def remove_client(self, id):
+    def remove_client(self, id, client):
         """remove that client from server clients via given ID and calling decorator: on_client_remove"""
         try:
-            del self._clients[id]
+            if client.is_admin:
+                del self._admins[id]
+            else:
+                del self._clients[id]
         except KeyError: pass
         finally:
             yield from self._call_decorated_function('on_client_remove', id=id)
@@ -66,7 +74,7 @@ class SERVER:
         decorator: called after server raised error
         args passing:
             first_arg = server
-
+            error = the raised error
         """
         if not asyncio.iscoroutinefunction(func):
             raise ValueError('%s is not coroutine function' %(func.__name__))

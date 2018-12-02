@@ -6,25 +6,30 @@ from easyTCP.CLIENT.utils.functions import executer, args_to_dict
 async def x(client):
     print("[+] Client connected to the SERVER (ip: %s, port: %d)" %(client.ip, client.port))
 
+@CLIENT.on_disconnect
+async def u(client):
+    print("disconnected from server")
+
 @CLIENT.on_recv
 async def y(client, method, data):
-    print('method: %s' %method)
-    print(data)
+    if method == 'HELP':
+        print('help:')
+        print(data['doc']) # did this to make it readable
+    else:
+        print(method, '\n', data)
 
 @CLIENT.on_error
 async def z(client, error):
-    print('[!] EXCEPTION: %s' %error)
+    raise error
 
 
 async def main(loop):
-    client = CLIENT('127.0.0.1', 25569, loop=loop)
+    client = CLIENT('127.0.0.1', 25569, admin_password='123', loop=loop)
     
     await client.connect()
-    while True:
-        try:
-            await executer(client, None, loop=loop)
-        except ClientExceptions.NotFound404Error:
-            print('server return 404 error')
+    await executer(client, None, loop=loop)
+
+    await client.close()
 
 
 if __name__=='__main__':

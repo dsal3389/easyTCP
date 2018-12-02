@@ -5,8 +5,11 @@ from .Protocol import Protocol
 class CLIENT(Protocol):
     def __init__(self, reader, writer, server):
         super().__init__(reader, writer, loop=server.loop, server_encryption=server.encryption)
-        self.server=server
-        self._id = 0
+        self.server   = server
+        self.is_admin = False
+        self.addr     = self.writer.get_extra_info('peername')
+        self.password = self.server.admin_password
+        self._id      = 0
 
     @property
     def id(self): # generating for the client a valid ID
@@ -20,7 +23,10 @@ class CLIENT(Protocol):
 
     @asyncio.coroutine
     def handshake(self):
-        """handshake between the client and the server""" 
+        """
+        handshake between the client and the server
+        you can overwrite that handshake but the client needs to support the same handshake
+        """ 
         yield from self.send('HANDSHAKE', key=str(self.server_encryption.public_key, encoding='utf-8'), encrypt=False) # need to send the first private key so all the recv packets will be encrypted
 
         method, data = yield from self.expected('HANDSHAKE', dencrypt=False)
@@ -33,6 +39,13 @@ class CLIENT(Protocol):
 
         method, data = yield from self.expected('HANDSHAKE')
         # confiming that the client recved the last package
+
+        if data['type'].upper() == 'ADMIN': # client sends its type if its type is admin we start in admin handshake
+            if self.password == data['password']: # better save password encrypted  (overwrite the handshake to do that)
+                self.is_admin = True
+                yield from self.send('HANDSHAKE') # return handshake if the client menaged to login
+            else:
+                yield from self.send('401', reason='passwords dosent match login as norma client')
 
         yield from self.server.add_client(id=self.id, client=self)
 
@@ -87,7 +100,7 @@ class CLIENT(Protocol):
             yield from self.server._call_decorated_function('on_client_unknown_request', client=self, request=method)
         else:
             try:
-                yield from func(client=self, **data)
+                _ = yield from func(client=self, **data)
                 # the client arguments passed here
             except TypeError as e:
                 yield from self.server._call_decorated_function('on_client_wrong_parameter', 
@@ -101,5 +114,5 @@ class CLIENT(Protocol):
         raising: on_client_remove decorator
         """
         self.writer.close()
-        yield from self.server.remove_client(id=self.id)
+        yield from self.server.remove_client(id=self.id, client=self)
 
