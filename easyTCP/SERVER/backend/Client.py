@@ -5,11 +5,11 @@ from .Protocol import Protocol
 class CLIENT(Protocol):
     def __init__(self, reader, writer, server):
         super().__init__(reader, writer, loop=server.loop, server_encryption=server.encryption)
-        self.server   = server
-        self.is_admin = False
-        self.addr     = self.writer.get_extra_info('peername')
-        self.password = self.server.admin_password
-        self._id      = 0
+        self.server       = server
+        self.is_superuser = False
+        self.addr         = self.writer.get_extra_info('peername')
+        self.password     = self.server.superuser_password
+        self._id          = 0
 
     @property
     def id(self): # generating for the client a valid ID
@@ -40,9 +40,9 @@ class CLIENT(Protocol):
         method, data = yield from self.expected('HANDSHAKE')
         # confiming that the client recved the last package
 
-        if data['type'].upper() == 'ADMIN': # client sends its type if its type is admin we start in admin handshake
+        if data['type'].upper() == 'SUPERUSER': # client sends its type if its type is superuser we start in superuser handshake
             if self.password == data['password']: # better save password encrypted  (overwrite the handshake to do that)
-                self.is_admin = True
+                self.is_superuser = True
                 yield from self.send('HANDSHAKE') # return handshake if the client menaged to login
             else:
                 yield from self.send('401', reason='passwords dosent match login as norma client')

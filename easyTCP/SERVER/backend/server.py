@@ -5,17 +5,21 @@ from .Client import CLIENT
 class SERVER:
     client = CLIENT
 
-    def __init__(self, IP:str, PORT:int, encryption, *, settings, admin_password, loop=None):
+    client_functions     = [] # make this easier to see stuff 
+    superuser_functions  = []
+
+    def __init__(self, IP:str, PORT:int, encryption, 
+                    *, settings, superuser_password, loop=None):
         self.ip   = IP
         self.port = PORT
 
-        self.admin_password = admin_password
+        self.superuser_password = superuser_password
         self.settings       = settings
         self.encryption     = encryption
         self.loop           = loop or asyncio.get_event_loop()
 
         self._clients = {}
-        self._admins  = {}
+        self._superusers  = {}
     
     @asyncio.coroutine
     def start(self):
@@ -32,8 +36,8 @@ class SERVER:
     @asyncio.coroutine
     def add_client(self, id, client):
         """adding client object to client list in the server calling decorator: on_client_join"""
-        if client.is_admin:
-            self._admins[id] = client
+        if client.is_superuser:
+            self._superusers[id] = client
         else:
             self._clients[id] = client
         yield from self._call_decorated_function('on_client_join', id=id, client=client)
@@ -42,8 +46,8 @@ class SERVER:
     def remove_client(self, id, client):
         """remove that client from server clients via given ID and calling decorator: on_client_remove"""
         try:
-            if client.is_admin:
-                del self._admins[id]
+            if client.is_superuser:
+                del self._superusers[id]
             else:
                 del self._clients[id]
         except KeyError: pass

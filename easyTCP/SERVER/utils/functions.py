@@ -13,5 +13,12 @@ def exclude(functions:list):
         
         #check if the func in the server and dosents starts with '_'
         if func.upper() in dir(SERVER) and not func.startswith('_'):
+            if func.lower() in SERVER.client_functions:
+                del SERVER.client_functions[SERVER.client_functions.index(func.lower())] # delets if from the client function list
+            elif func.lower() in SERVER.superuser_functions:
+                del SERVER.superuser_functions[SERVER.superuser_functions.index(func.lower())] # same just for superusers
+
             exec('del SERVER.%s' %func.upper())
+
+
         

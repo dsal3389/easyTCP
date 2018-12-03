@@ -1,5 +1,5 @@
 import asyncio
-from .decorators import add_request, admin_required
+from .decorators import add_request, superuser
 
 
 class BUILD_IN:
@@ -29,54 +29,57 @@ class BUILD_IN:
             await client.send('HELP', doc=doc)
     
     @add_request
-    async def commands(server, client):
+    async def commands(server, client, a='none'):
         """show all the commands that the client can user
-        include the admin commands"""
-        commands = [command.title() for command in dir(server) if not command.startswith('_') and command.upper() == command]
-        await client.send('COMMANDS', commands=commands)
+        include the superuser commands"""
+        commands = {'client': server.client_functions}
+        if client.is_superuser and a != 'none':
+            commands['superuser'] = server.superuser_functions
 
+        await client.send('COMMANDS', **commands)
+
+    @superuser
     @add_request
-    @admin_required
     async def bc(server, client, m, t='client'):
-        """send broadcast to all clients (only for admins)
+        """send broadcast to all clients (only for superusers)
             -m <message>        the message to broadcast
-            -t <client/admin>   to who send the message as default its "client"
+            -t <client/superuser>   to who send the message as default its "client"
             
             example:
-                >>> bc -t admin -m message only for admins
+                >>> bc -t superuser -m message only for superusers
             
-            Bcuz I did "-t admin" only admins will recv that message
+            Bcuz I did "-t superuser" only superusers will recv that message
         """
         if t.lower() == 'client':
             await asyncio.wait([client.send('BC', id=str(client.id), message=m) for id, client in server._clients.items()])
-            await asyncio.wait([client.send('BC', id=str(client.id), message=m) for id, client in server._admins.items()])
-            # admins can recv bc for clients
+            await asyncio.wait([client.send('BC', id=str(client.id), message=m) for id, client in server._superusers.items()])
+            # superusers can recv bc for clients
 
-        elif t.lower() == 'admin':
-            await asyncio.wait([client.send('BC', id=str(client.id), message=m) for id, client in server._admins.items()])
+        elif t.lower() == 'superuser':
+            await asyncio.wait([client.send('BC', id=str(client.id), message=m) for id, client in server._superusers.items()])
         else:
             await client.send('406', reason='unknown %s' %t)
-    
+
+    @superuser
     @add_request
-    @admin_required
     async def clients(server, client, e=None):
-        """give you the list of clients ids to see who connected (only for admins)
-            -e (exclude[client/admin])  for example if you exclude admin this wont show the admins that connected
+        """give you the list of clients ids to see who connected (only for superusers)
+            -e (exclude[client/superuser])  for example if you exclude superuser this wont show the superusers that connected
 
             example:
-                >>> clients -e admin
+                >>> clients -e superuser
                 # will return only the clients ids
-            dont call 'e' to show admins and clients    
+            dont call 'e' to show superusers and clients    
         """
         if e is None:
             clients = {
-                'admins' :[client_id for client_id in server._admins],
+                'superusers' :[client_id for client_id in server._superusers],
                 'clients':[client_id for client_id in server._clients]
             }
-        elif e.lower() == 'admin':
+        elif e.lower() == 'superuser':
             clients = {'clients':[client_id for client_id in server._clients]}
         elif e.lower() == 'client':
-            clients = {'admins':[client_id for client_id in server._admins]}
+            clients = {'superusers':[client_id for client_id in server._superusers]}
         else:
             clients = {e:[]}
 

@@ -44,17 +44,23 @@ def add_request(func):
     if not coroutine:
         raise ValueError('the request "%s" is not coroutine' %name)
     setattr(SERVER, name.upper(), func) # all added requests added in uppercase
+    SERVER.client_functions.append(func.__name__.lower())
+
     return func
 
-def admin_required(func):
+def superuser(func):
     """
-    if the client that requested is not an admin
+    if the client that requested is not an superuser
     the server will return 403
     """
+    del SERVER.client_functions[SERVER.client_functions.index(func.__name__)]
+    # deletes the function from the client functions list
+
+    SERVER.superuser_functions.append(func.__name__.lower())
 
     @wraps(func)
     async def wrapper(server, client, *args, **kwargs):
-        if client.is_admin:
+        if client.is_superuser:
             await func(server, client, *args, **kwargs)
         else: 
             await client.send('403')

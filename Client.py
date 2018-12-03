@@ -24,7 +24,7 @@ async def z(client, error):
 
 
 async def main(loop):
-    client = CLIENT('127.0.0.1', 25569, admin_password='123', loop=loop)
+    client = CLIENT('127.0.0.1', 25569, superuser_password='123', loop=loop)
     
     await client.connect()
     await executer(client, None, loop=loop)

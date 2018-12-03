@@ -4,15 +4,15 @@ from .ClientExceptions import *
 
 
 class CLIENT(Protocol):
-    def __init__(self, ip:str, port:int, *, admin_password=None, client_encryption=None, loop=None):
+    def __init__(self, ip:str, port:int, *, superuser_password=None, client_encryption=None, loop=None):
         super().__init__(loop=loop, client_encryption=client_encryption)
         self.ip              = ip
         self.port            = port
         self.connected       = False # tells you if the client connected or not
         self.listen_event    = self.loop.create_future()
-        self.password        = admin_password
-        self.type            = 'ADMIN' if self.password is not None else 'CLIENT'
-        # if you entered password you are tring to log as admin if you keed it None
+        self.password        = superuser_password
+        self.type            = 'SUPERUSER' if self.password is not None else 'CLIENT'
+        # if you entered password you are tring to log as superuser if you keed it None
         # you will be entered as a normal client
 
         self.error_codes = {
@@ -57,11 +57,11 @@ class CLIENT(Protocol):
         yield from self.send('HANDSHAKE', type=self.type, password=self.password)
         # if your type is CLIENT the server will ignore the password
 
-        if self.type is 'ADMIN':
+        if self.type is 'SUPERUSER':
             method, data = yield from self.expected('HANDSHAKE', '401')
             if method == '401':
                 yield from self._call_decorated_function('on_recv', method=method, data=data)
-                # the server will return a reason if the client didnt logged in as admin
+                # the server will return a reason if the client didnt logged in as superuser
         self.connected = True
 
     @asyncio.coroutine

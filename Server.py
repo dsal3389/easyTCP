@@ -1,7 +1,7 @@
 import asyncio
 from easyTCP.SERVER.backend import SERVER
 from easyTCP.SERVER.utils import DEFAULT_SETTINGS, DEFAULT_ENCRYPTION
-from easyTCP.SERVER.utils.decorators import add_request, admin_required
+from easyTCP.SERVER.utils.decorators import add_request, superuser
 from easyTCP.SERVER.utils.BUILD_IN import BUILD_IN # importing base requests like help or echo
 from easyTCP.SERVER.utils.functions import exclude
 
@@ -12,8 +12,8 @@ async def server_is_ready(server):
 
 @SERVER.on_client_join
 async def joined(server, client, id):
-    if client.is_admin:
-        print('[+] an admin joined [%d]' %client.id)
+    if client.is_superuser:
+        print('[+] an superuser joined [%d]' %client.id)
     else:
         print('[+] A new client joined with the ID: %d' %id)
     await client.send('HELLO', message='this is a banner when client joined')
@@ -30,8 +30,8 @@ async def unknown_request(server, client, request):
 
 @SERVER.on_client_wrong_parameter
 async def wrong_parameters(server, client, request, parameters):
-    if client.is_admin:
-        print('[~] admin entered wrong parameters for [%s] %s' %(request, parameters))
+    if client.is_superuser:
+        print('[~] superuser entered wrong parameters for [%s] %s' %(request, parameters))
     else:
         print('[~] client entered wrong parameters for [%s] %s' %(request, parameters))
     await server.HELP(client=client, f=request)
@@ -43,13 +43,14 @@ async def wrong_parameters(server, client, request, parameters):
 async def client_error(server, client, error):
     print('[!] client [%d] raised %s' %(client.id, error))
 
+@superuser
 @add_request # example
 async def test(server, client, h, d='default'):
     print('h = %s\nd = %s' %(h, d))
 
 
 async def main(loop):
-    server = SERVER('127.0.0.1', 25569, None, settings=DEFAULT_SETTINGS, admin_password='123', loop=loop)
+    server = SERVER('127.0.0.1', 25569, None, settings=DEFAULT_SETTINGS, superuser_password='123', loop=loop)
     exclude(['test', 'echo']) # deleting the example in line 47
 
     await server.start()
