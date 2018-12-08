@@ -8,7 +8,8 @@ an esay way to user async server
 `python3 -m pip install easyTCP`
 
 ### example
-files for exaple [here][examples]
+files for example [here][examples].
+
 [examples]: https://github.com/dsal3389/easyTCP/tree/master/example
 
 ### what you get
