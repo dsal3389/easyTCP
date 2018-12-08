@@ -1,12 +1,9 @@
 import re, io
 from setuptools import setup, find_packages
 
-with io.open('easyTCP/__init__.py', 'rt', encoding='utf-8') as f:
-	version = re.search(r'__version__ = \'(.*?)\'', f.read()).group(1)
-
 setup(
 	name="easyTCP",
-	version=version,
+	version='0.5.2',
 	url='https://github.com/dsal3389/easyTCP',
 	download_url='https://github.com/dsal3389/easyTCP.git',
 	license='Apache 2.0',
