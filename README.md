@@ -1,4 +1,3 @@
-[Github-flavored Markdown](https://guides.github.com/features/mastering-markdown/)
 [![PyPI](https://img.shields.io/apm/l/vim-mode.svg?style=flat-square)](https://github.com/dsal3389/easyTCP/blob/master/LICENSE)
 [![](https://img.shields.io/pypi/pyversions/Django.svg?style=flat-square)](https://pypi.org/project/easyTCP/#description)
 
