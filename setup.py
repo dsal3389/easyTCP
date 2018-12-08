@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setup(
 	name="easyTCP",
-	version='0.5.5',
+	version='0.5.6',
 	url='https://github.com/dsal3389/easyTCP',
 	download_url='https://github.com/dsal3389/easyTCP.git',
 	license='Apache 2.0',
@@ -19,8 +19,12 @@ setup(
 	],
 	packages=[
                 'easyTCP',
+                'easyTCP.CLIENT',
+                'easyTCP.CLIENT.backend',
+                'easyTCP.CLIENT.utils',
                 'easyTCP.SERVER',
-                'easyTCP.CLIENT'
+                'easyTCP.SERVER.backend',
+                'easyTCP.SERVER.utils'
             ],
 	long_description=long_description,
 	classifiers=[
