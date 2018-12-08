@@ -20,5 +20,18 @@ def exclude(functions:list):
 
             exec('del SERVER.%s' %func.upper())
 
+def external_modules(modules:list):
+    """
+    except Importing your external files for the @add_request
+    all you need to do is put your extenal file name as you would import it
+    example:
+        external_modules(['<file_name>', ['<folder>.<file>']])
+                                         - load the file from a folder
+    """
+    for module in modules:
+        try:
+            exec("import %s" %module)
+        except ImportError:
+            raise ModuleNotFoundError("Could load %s" %module)
 
         

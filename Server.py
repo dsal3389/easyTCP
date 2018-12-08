@@ -3,7 +3,7 @@ from easyTCP.SERVER.backend import SERVER
 from easyTCP.SERVER.utils import DEFAULT_SETTINGS, DEFAULT_ENCRYPTION
 from easyTCP.SERVER.utils.decorators import add_request, superuser
 from easyTCP.SERVER.utils.BUILD_IN import BUILD_IN # importing base requests like help or echo
-from easyTCP.SERVER.utils.functions import exclude
+from easyTCP.SERVER.utils.functions import exclude, external_modules
 
 
 @SERVER.on_ready
@@ -51,7 +51,7 @@ async def test(server, client, h, d='default'):
 
 async def main(loop):
     server = SERVER('127.0.0.1', 25569, None, settings=DEFAULT_SETTINGS, superuser_password='123', loop=loop)
-    exclude(['test', 'echo']) # deleting the example in line 47
+    exclude(['test']) # deleting the example in line 48
 
     await server.start()
 

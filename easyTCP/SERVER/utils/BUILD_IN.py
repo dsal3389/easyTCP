@@ -9,7 +9,7 @@ class BUILD_IN:
         """display message to the server terminal
             -m <message>    display the message to the screen
         """
-        print('[+]Client [%d] echo:' %client.id, m)
+        print('[+] Client [%d] echo: ' %client.id, m)
     
     @add_request
     async def ping(server, client, **kwargs):
