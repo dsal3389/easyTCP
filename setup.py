@@ -6,10 +6,10 @@ with open("README.md", "r") as f:
 
 setup(
 	name="easyTCP",
-	version='0.5.6',
+	version='0.6.0',
 	url='https://github.com/dsal3389/easyTCP',
 	download_url='https://github.com/dsal3389/easyTCP.git',
-	license='Apache 2.0',
+	license='IMT',
 	author="Daniel Sonbolian",
 	author_email='dsal3389@gmail.com',
 	description="easy&fast way to create asyncronus server&clients",
@@ -29,7 +29,7 @@ setup(
 	long_description=long_description,
 	classifiers=[
         'Intended Audience :: Developers',
-        'License :: OSI Approved',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
