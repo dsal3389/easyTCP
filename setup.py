@@ -1,19 +1,26 @@
-import re, io
-from setuptools import setup, find_packages
+import re
+import os
+from setuptools import setup
+
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+
+with open(os.path.join(BASE_DIR, 'easyTCP', '__init__.py'), 'r')as f:
+	version = re.search("__version__ = '(.*?)'", f.read()).group(1)
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
+
 setup(
 	name="easyTCP",
-	version='0.6.0',
+	version=version,
 	url='https://github.com/dsal3389/easyTCP',
 	download_url='https://github.com/dsal3389/easyTCP.git',
 	license='IMT',
 	author="Daniel Sonbolian",
 	author_email='dsal3389@gmail.com',
 	description="easy&fast way to create asyncronus server&clients",
-	python_requires='>=3.4.*',
+	python_requires='>=3.5.*',
 	install_requires=[
 		'cryptography==2.4.2'
 	],
@@ -30,7 +37,6 @@ setup(
 	classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
