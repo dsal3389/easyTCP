@@ -2,6 +2,41 @@ import asyncio, random
 from .Protocol import Protocol
 
 
+# this class used by the server.py automatically
+"""
+to overwrite
+
+import asyncio
+from easyTCP.SERVER.backend import SERVER, CLIENT
+
+@SERVER.on_ready
+async def x(server):
+    print("Server is ready")
+
+@add_request
+async def <some_reques>(server, client, x):
+    # ...code
+
+class CustomClient(CLIENT):
+    #... overwrite some functions here
+
+SERVER.CLIENT = CustomClient
+# changing the client to use the custom one
+
+async def main(loop):
+    server = SERVER(...stuff)
+    await server.start()
+
+
+if __name__=='__main__':
+    loop=asyncio.get_event_loop()
+    loop.run_until_complete(main(loop))
+
+    try:
+        loop.run_forever()
+    finally:
+        loop.close()
+"""
 class CLIENT(Protocol):
     def __init__(self, reader, writer, server):
         super().__init__(reader, writer, loop=server.loop, server_encryption=server.encryption)

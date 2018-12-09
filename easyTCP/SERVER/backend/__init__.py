@@ -1,3 +1,4 @@
 from .server import SERVER
+from .Client import CLIENT
 
-__all__=('SERVER',)
+__all__=('SERVER', 'CLIENT')

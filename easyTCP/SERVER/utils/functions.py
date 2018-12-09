@@ -32,6 +32,6 @@ def external_modules(modules:list):
         try:
             exec("import %s" %module)
         except ImportError:
-            raise ModuleNotFoundError("Could load %s" %module)
+            raise ModuleNotFoundError("Could not load %s" %module)
 
         
