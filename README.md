@@ -42,5 +42,5 @@ if __name__=='__main__':
     finally:
         loop.close()
 ```
-**this is a server that only show when he is ready but everything is still working like `removing/adding` clients
-and build in commands are loaded**
+**(this is a server that only show when he is ready but everything is still working like `removing/adding` clients
+and build in commands are loaded recommanded looking at [here][examples])**
