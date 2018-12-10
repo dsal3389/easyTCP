@@ -10,6 +10,12 @@ from easyTCP.SERVER.utils.functions import exclude, external_modules
 async def server_is_ready(server):
     print('[+] Server started running (ip: %s, port: %d)' %(server.ip, server.port))
 
+@SERVER.on_close
+async def closed(server, error):
+    if error is not None:
+        raise error
+    print("[-] Server closed")
+
 @SERVER.on_client_join
 async def joined(server, client, id):
     if client.is_superuser:
@@ -50,10 +56,18 @@ async def test(server, client, h, d='default'):
 
 
 async def main(loop):
-    server = SERVER('127.0.0.1', 25569, None, settings=DEFAULT_SETTINGS, superuser_password='123', loop=loop)
-    exclude(['test']) # deleting the example in line 48
+    exclude(['test']) # deleting the example in line 54
 
-    await server.start()
+    async with SERVER('127.0.0.1', 25569, None, settings=DEFAULT_SETTINGS, superuser_password='123', loop=loop) as server:
+            await server.start()
+
+            await asyncio.wait_for(
+                server.keep_alive(), 20, loop=loop
+            ) # running the server for 20 sec to show you the on_close decorator
+              # importent note: if you opening the server with "with"
+              # you must call the keep_alive function (do not run this as a task)
+              # as normal you should call this like this:
+              # await server.keep_alive()
 
 
 if __name__=='__main__':
@@ -62,7 +76,9 @@ if __name__=='__main__':
 
     try:
         loop.run_forever()
+        # this is not importent anymore while the keep_alive function running
+        # so if you want to stop the loop call loop.close() this will close the server as well
+        # or you can call server.close() this wont stop the run_forever but the server only
+
     finally:
         loop.close()
-
-

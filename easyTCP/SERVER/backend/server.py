@@ -53,12 +53,37 @@ class SERVER:
         except KeyError: pass
         finally:
             yield from self._call_decorated_function('on_client_remove', id=id)
+    
+    @asyncio.coroutine
+    def close(self, error=None):
+        """closing existing connections and the server"""
+        self.server.close()
+        for _, client in self._clients.items():
+            self.loop.create_task(client.writer.close())
+            # if it take time for some reason or if you have a lot of clients
+            # they wont be have to wait for one connection to close
+            # in the *.close() leaves existing connections open
+
+        for _, client in self._superusers.items():
+            self.loop.create_task(client.writer.close())
+            # doing the same for the superusers
+
+        self._clients={}
+        self._superusers={}
+        yield from self._call_decorated_function('on_close', error=error)
+    
+    @asyncio.coroutine
+    def keep_alive(self):
+        """function must be called if you starting the server as a context managment
+        (the "with" statement)"""
+        while self.loop.is_running:
+            yield from asyncio.sleep(10)
 
     @asyncio.coroutine
     def _call_decorated_function(self, function_name, *args, **kwargs):
         try:
             yield from getattr(self, function_name)(**kwargs)
-        except TypeError as e: pass
+        except TypeError: pass
 
     @classmethod
     def on_ready(cls, func):
@@ -71,19 +96,20 @@ class SERVER:
             raise ValueError('%s is not coroutine function' %(func.__name__))
         setattr(cls, 'on_ready', func)
         return func
-
+    
     @classmethod
-    def on_error(cls, func):
+    def on_close(cls, func):
         """
-        decorator: called after server raised error
+        decorator: called after server closed becuase of error or the function "close" or if you doing loop.close()
         args passing:
             first_arg = server
-            error = the raised error
+
+            error = if the server closed because of some error
         """
         if not asyncio.iscoroutinefunction(func):
             raise ValueError('%s is not coroutine function' %(func.__name__))
-        setattr(cls, 'on_error', func)
-        return func    
+        setattr(cls, 'on_close', func)
+        return func
 
     @classmethod
     def on_client_join(cls, func):
@@ -167,5 +193,11 @@ class SERVER:
         return func
 
     def __str__(self):
-        return "SERVER"
+        return self.ip, self.port
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close(exc_val)
 
