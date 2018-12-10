@@ -5,7 +5,7 @@
 an esay way to user async server
 
 # installing
-`python3 -m pip3 install easyTCP`
+`python3 -m pip3 install -Uv easyTCP`
 
 ### example
 files for example [here][examples].
