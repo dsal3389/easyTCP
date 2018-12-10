@@ -16,7 +16,7 @@ setup(
 	version=version,
 	url='https://github.com/dsal3389/easyTCP',
 	download_url='https://github.com/dsal3389/easyTCP.git',
-	license='IMT',
+	license='MIT',
 	author="Daniel Sonbolian",
 	author_email='dsal3389@gmail.com',
 	description="easy&fast way to create asyncronus server&clients",
