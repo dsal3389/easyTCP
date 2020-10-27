@@ -22,7 +22,7 @@ setup(
 	description="easy&fast way to create asyncronus server&clients",
 	python_requires='>=3.5.*',
 	install_requires=[
-		'cryptography==2.4.2'
+		'cryptography==3.2'
 	],
 	packages=[
                 'easyTCP',
